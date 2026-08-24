@@ -80,13 +80,17 @@ WSGI_APPLICATION = 'reserva_vc.wsgi.application'
 # ========== CONFIGURACIÓN DE BASE DE DATOS ==========
 # Usar SQLite en Vercel (temporal) o PostgreSQL local
 
-if 'VERCEL' in os.environ:
-    # En Vercel usar SQLite en carpeta temporal
+# ========== CONFIGURACIÓN DE BASE DE DATOS ==========
+
+if os.environ.get('DATABASE_URL'):
+    import dj_database_url
+
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': '/tmp/db.sqlite3',
-        }
+        'default': dj_database_url.parse(
+            os.environ['DATABASE_URL'],
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
 else:
     # Desarrollo local con SQLite
@@ -97,6 +101,7 @@ else:
         }
     }
 
+# ========== FIN CONFIGURACIÓN BD ==========
 # ========== FIN CONFIGURACIÓN BD ==========
 
 # Password validation
