@@ -1,0 +1,369 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aprobar Reserva</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
+    <style>
+        .reservation-details {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-item {
+            margin-bottom: 8px;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        #rejection-fields {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'app/images/logo_uc1.png' %}" alt="Logo UC">
+            </div>
+            <ul>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                <li><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                <li class="active"><a href="{% url 'listar_reservaciones' %}"><i class="fas fa-list"></i> Reservaciones</a></li>
+                <li><a href="{% url 'listar_moderadores' %}"><i class="fas fa-users"></i> Moderadores</a></li>
+                <li><a href="{% url 'listar_locales' %}"><i class="fas fa-map-marker-alt"></i> Locales</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notificaciones' %}">
+                        <i class="fas fa-bell"></i> Notificaciones
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'documentacion' %}"><i class="fas fa-book"></i> Documentación</a></li>
+                <li><a href="{% url 'cerrar_sesion' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            <button class="theme-toggle" id="theme-toggle">🌓</button>
+            
+            <div class="container mt-4">
+                <h1 class="mb-4">Revisar Reserva</h1>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">{{ reserva.vcName }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-user me-2"></i>Usuario:</strong>
+                                    <span>{{ reserva.user.get_full_name|default:reserva.user.username }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-calendar-alt me-2"></i>Fecha y Hora:</strong>
+                                    <span>{{ reserva.dateTime|date:"d/m/Y H:i" }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-clock me-2"></i>Duración:</strong>
+                                    <span>{{ reserva.duration }} hora(s)</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-map-marker-alt me-2"></i>Local:</strong>
+                                    <span>{{ reserva.local }}</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-clipboard-list me-2"></i>Motivo:</strong>
+                                    <span>{{ reserva.get_vcMotive_display }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-video me-2"></i>Plataforma:</strong>
+                                    <span>{{ reserva.get_platafom_display }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-users me-2"></i>Participantes:</strong>
+                                    <span>{{ reserva.cantpart }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <strong><i class="fas fa-user-tie me-2"></i>Moderador:</strong>
+                                    <span>{{ reserva.idofModerator|default:"No asignado" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if reserva.observations %}
+                        <div class="mt-3">
+                            <strong><i class="fas fa-sticky-note me-2"></i>Observaciones:</strong>
+                            <p class="mb-0">{{ reserva.observations }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="mt-3">
+                            <strong><i class="fas fa-link me-2"></i>URL:</strong>
+                            <a href="{{ reserva.url }}" target="_blank">{{ reserva.url }}</a>
+                        </div>
+                    </div>
+                </div>
+
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-times-circle{% endif %} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Decisión de Aprobación</h3>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" id="approval-form">
+                            {% csrf_token %}
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-bold">Estado de la Reserva</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-flag"></i></span>
+                                    {{ form.status }}
+                                </div>
+                            </div>
+                            
+                            <div id="rejection-fields" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Motivo de Rechazo</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-ban"></i></span>
+                                        {{ form.rejection_reason }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Detalles Adicionales</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-comment"></i></span>
+                                        {{ form.rejection_details }}
+                                    </div>
+                                    <small class="text-muted">Explica al usuario por qué se rechazó su reserva</small>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="{% url 'listar_reservaciones' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submit-btn">
+                                    <i class="fas fa-save me-2"></i>Guardar Decisión
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        // Cambiar tema
+        const toggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+
+        toggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            {% if request.user.is_authenticated %}
+                fetch(`/set-theme/${newTheme}/`, { method: 'GET' });
+            {% endif %}
+        });
+
+        // Mostrar/ocultar campos de rechazo
+        const statusField = document.getElementById('id_status');
+        const rejectionFields = document.getElementById('rejection-fields');
+        const approvalForm = document.getElementById('approval-form');
+        const submitBtn = document.getElementById('submit-btn');
+
+        function toggleRejectionFields() {
+            if (statusField.value === 'rejected') {
+                rejectionFields.style.display = 'block';
+            } else {
+                rejectionFields.style.display = 'none';
+            }
+        }
+
+        // Verificar estado inicial
+        toggleRejectionFields();
+        
+        // Escuchar cambios en el campo de estado
+        statusField.addEventListener('change', toggleRejectionFields);
+
+        // Validación antes de enviar
+        approvalForm.addEventListener('submit', function(e) {
+            if (statusField.value === 'rejected') {
+                const reason = document.getElementById('id_rejection_reason').value;
+                if (!reason) {
+                    e.preventDefault();
+                    alert('Por favor selecciona un motivo de rechazo');
+                    return false;
+                }
+            }
+            
+            // Deshabilitar botón para evitar múltiples envíos
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Procesando...';
+            return true;
+        });
+
+        // Mostrar mensaje si hay campos inválidos
+        document.addEventListener('DOMContentLoaded', function() {
+            const invalidFields = document.querySelectorAll('.is-invalid');
+            if (invalidFields.length > 0) {
+                invalidFields[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        });
+    </script>
+            <!-- Añadir esto en tu plantilla base -->
+ <!-- Indicador de estado de conexión -->
+ <div id="connection-status" class="{% if online %}online{% else %}offline{% endif %}">
+    <span class="status-icon"></span>
+    <span class="status-text">{% if online %}Conectado{% else %}Sin conexión{% endif %}</span>
+</div>
+
+<!-- Script para verificar conexión -->
+<script>
+    // Verificar estado de conexión periódicamente
+    function checkConnectionStatus() {
+        fetch('/check-connection/', { 
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('connection-status');
+            if (data.online) {
+                statusElement.className = 'online';
+                statusElement.querySelector('.status-text').textContent = 'Conectado';
+                
+                // Si estamos online, intentar sincronizar operaciones pendientes
+                fetch('/get-pending-count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.pending_count > 0) {
+                            // Mostrar notificación de sincronización
+                            const notification = document.createElement('div');
+                            notification.className = 'sync-notification';
+                            notification.textContent = `Sincronizando ${data.pending_count} operaciones...`;
+                            document.body.appendChild(notification);
+                            
+                            // Eliminar notificación después de 3 segundos
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 3000);
+                        }
+                    });
+            } else {
+                statusElement.className = 'offline';
+                statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+            }
+        })
+        .catch(() => {
+            // Si hay error en la petición, asumimos que estamos offline
+            const statusElement = document.getElementById('connection-status');
+            statusElement.className = 'offline';
+            statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+        });
+    }
+
+    // Verificar cada 30 segundos
+    setInterval(checkConnectionStatus, 30000);
+
+    // Verificar al cargar la página
+    document.addEventListener('DOMContentLoaded', checkConnectionStatus);
+</script>
+
+<style>
+    #connection-status {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    #connection-status.online {
+        background-color: #e6f7e6;
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+    
+    #connection-status.offline {
+        background-color: #f8d7da;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+    
+    .status-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .online .status-icon {
+        background-color: #28a745;
+    }
+    
+    .offline .status-icon {
+        background-color: #dc3545;
+    }
+    
+    .pending-operations {
+        margin-left: 10px;
+        font-size: 12px;
+    }
+    
+    .sync-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #cce5ff;
+        color: #004085;
+        padding: 10px 15px;
+        border-radius: 4px;
+        z-index: 1001;
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+</body>
+</html>

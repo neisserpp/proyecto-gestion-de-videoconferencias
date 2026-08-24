@@ -1,0 +1,257 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>Editar Reserva</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'app/images/logo_uc1.png' %}" alt="Logo UC">
+            </div>
+            <ul>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' %}
+                        <li><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'listar_reservaciones' %}"><i class="fas fa-list"></i> Reservaciones</a></li>
+                        <li><a href="{% url 'listar_moderadores' %}"><i class="fas fa-users"></i> Moderadores</a></li>
+                        <li><a href="{% url 'listar_locales' %}"><i class="fas fa-map-marker-alt"></i> Locales</a></li>
+                    {% elif user.role == 'user' %}
+                        <li><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'mis_reservas' %}"><i class="fas fa-list"></i> Mis Reservas</a></li>
+                    {% endif %}
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notificaciones' %}">
+                        <i class="fas fa-bell"></i> Notificaciones
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'documentacion' %}"><i class="fas fa-book"></i> Documentación</a></li>
+                <li><a href="{% url 'cerrar_sesion' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+        <div class="content">
+            <button class="theme-toggle" id="theme-toggle">🌓</button>
+
+            <div class="container mt-4">
+                <h1 class="mb-4">Editar Reserva</h1>
+                
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="card shadow">
+                    <div class="card-body">
+                        <form method="post">
+                            {% csrf_token %}
+                            
+                            {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label class="form-label">{{ field.label }}</label>
+                                
+                                {% if field.errors %}
+                                    {% if field|widget_type == 'select' %}
+                                        {% render_field field class="form-select is-invalid" %}
+                                    {% else %}
+                                        {% render_field field class="form-control is-invalid" %}
+                                    {% endif %}
+                                    <div class="invalid-feedback">
+                                        {% for error in field.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {% if field|widget_type == 'select' %}
+                                        {% render_field field class="form-select" %}
+                                    {% else %}
+                                        {% render_field field class="form-control" %}
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Guardar
+                                </button>
+                                <a href="{% if request.user.role == 'admin' %}{% url 'listar_reservaciones' %}{% else %}{% url 'mis_reservas' %}{% endif %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>Cancelar
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+  
+    <script>
+        const toggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+
+        toggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+
+            {% if request.user.is_authenticated %}
+                fetch(`/set-theme/${newTheme}/`, { method: 'GET' });
+            {% endif %}
+        });
+    </script>
+        <!-- Añadir esto en tu plantilla base -->
+ <!-- Indicador de estado de conexión -->
+ <div id="connection-status" class="{% if online %}online{% else %}offline{% endif %}">
+    <span class="status-icon"></span>
+    <span class="status-text">{% if online %}Conectado{% else %}Sin conexión{% endif %}</span>
+</div>
+
+<!-- Script para verificar conexión -->
+<script>
+    // Verificar estado de conexión periódicamente
+    function checkConnectionStatus() {
+        fetch('/check-connection/', { 
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('connection-status');
+            if (data.online) {
+                statusElement.className = 'online';
+                statusElement.querySelector('.status-text').textContent = 'Conectado';
+                
+                // Si estamos online, intentar sincronizar operaciones pendientes
+                fetch('/get-pending-count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.pending_count > 0) {
+                            // Mostrar notificación de sincronización
+                            const notification = document.createElement('div');
+                            notification.className = 'sync-notification';
+                            notification.textContent = `Sincronizando ${data.pending_count} operaciones...`;
+                            document.body.appendChild(notification);
+                            
+                            // Eliminar notificación después de 3 segundos
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 3000);
+                        }
+                    });
+            } else {
+                statusElement.className = 'offline';
+                statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+            }
+        })
+        .catch(() => {
+            // Si hay error en la petición, asumimos que estamos offline
+            const statusElement = document.getElementById('connection-status');
+            statusElement.className = 'offline';
+            statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+        });
+    }
+
+    // Verificar cada 30 segundos
+    setInterval(checkConnectionStatus, 30000);
+
+    // Verificar al cargar la página
+    document.addEventListener('DOMContentLoaded', checkConnectionStatus);
+</script>
+
+<style>
+    #connection-status {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    #connection-status.online {
+        background-color: #e6f7e6;
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+    
+    #connection-status.offline {
+        background-color: #f8d7da;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+    
+    .status-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .online .status-icon {
+        background-color: #28a745;
+    }
+    
+    .offline .status-icon {
+        background-color: #dc3545;
+    }
+    
+    .pending-operations {
+        margin-left: 10px;
+        font-size: 12px;
+    }
+    
+    .sync-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #cce5ff;
+        color: #004085;
+        padding: 10px 15px;
+        border-radius: 4px;
+        z-index: 1001;
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

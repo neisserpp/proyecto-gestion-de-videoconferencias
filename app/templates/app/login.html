@@ -1,0 +1,401 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Universidad de Camagüey</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* Botón de tema */
+.theme-toggle {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px var(--shadow-color);
+    transition: background-color 0.3s ease;
+}
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+    --card-bg: #fff;
+    --border-color: #ddd;
+    --hover-bg: #eee;
+    --primary-color: #007bff;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #f8f9fa;
+    --card-bg: #2d2d2d;
+    --border-color: #404040;
+    --hover-bg: #404040;
+    --primary-color: #17a2b8;
+    --shadow-color: rgba(255, 255, 255, 0.1);
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+        :root {
+            --primary-color: #005c83;
+            --secondary-color: #f8f9fa;
+            --accent-color: #ffd700;
+            --text-color: #333333;
+            --text-inverse: #ffffff;
+            --input-bg: #ffffff;
+        }
+
+        body {
+            background: var(--secondary-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            color: var(--text-color);
+        }
+
+        .login-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, rgba(0,92,131,0.1) 0%, rgba(255,215,0,0.05) 100%);
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            background: var(--secondary-color);
+        }
+
+        .login-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .university-logo {
+            width: 200px;
+            margin: 2rem auto;
+            display: block;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .card-header {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            border-radius: 15px 15px 0 0 !important;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.3s ease;
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,92,131,0.1);
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary-color);
+        }
+
+        .btn-login {
+            background: var(--primary-color);
+            border: none;
+            padding: 0.8rem 2rem;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            color: var(--text-inverse);
+        }
+
+        .btn-login:hover {
+            background: #004466;
+            transform: scale(1.05);
+        }
+
+        .footer {
+            background: var(--primary-color);
+            color: var(--text-inverse);
+            padding: 1.5rem;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .form-label {
+            color: var(--text-color);
+        }
+
+        /* Dark theme styles */
+        [data-theme="dark"] {
+            --primary-color: #004466;
+            --secondary-color: #1a1a1a;
+            --text-color: #f0f0f0;
+            --text-inverse: #ffffff;
+            --input-bg: #2a2a2a;
+        }
+
+        [data-theme="dark"] .login-container {
+            background: linear-gradient(135deg, rgba(0,68,102,0.1) 0%, rgba(255,215,0,0.05) 100%);
+        }
+
+        [data-theme="dark"] .form-control {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border-color: #444;
+        }
+
+        [data-theme="dark"] .input-group-text {
+            background-color: #333;
+            color: var(--text-color);
+            border-color: #444;
+        }
+
+        @media (max-width: 576px) {
+            .login-card {
+                margin: 1rem;
+            }
+            
+            .university-logo {
+                width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" id="theme-toggle">🌓</button>
+    
+    <div class="login-container">
+        <div class="login-card card">
+            <div class="card-header">
+                <img src="{% static 'app/images/logo_uc1.png' %}" alt="Logo Universidad de Camagüey" class="university-logo">
+                <h3 class="mt-3 mb-0">Sistema de Reservaciones</h3>
+                <p class="mb-0">Videoconferencias y Eventos Académicos</p>
+            </div>
+            
+            <div class="card-body p-4">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {% for error in form.non_field_errors %}
+                            <i class="fas fa-exclamation-circle me-2"></i>{{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-4 position-relative">
+                        <label class="form-label fw-bold">Usuario</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user text-primary"></i>
+                            </span>
+                            {% render_field form.username class="form-control" placeholder="Ingrese su usuario" %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4 position-relative">
+                        <label class="form-label fw-bold">Contraseña</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock text-primary"></i>
+                            </span>
+                            {% render_field form.password class="form-control" placeholder="••••••••" %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-login btn-block">
+                        <i class="fas fa-sign-in-alt me-2"></i>Acceder al Sistema
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p class="mb-0">
+                <strong>Universidad de Camagüey</strong><br>
+                {% now "Y" %} | Todos los derechos reservados
+            </p>
+            <small>Sistema de Gestión de Reservaciones v2.0</small>
+        </div>
+    </footer>
+
+    <script>
+        // Tema Dark Mode
+        const toggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+
+        toggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+            <!-- Añadir esto en tu plantilla base -->
+ <!-- Indicador de estado de conexión -->
+ <div id="connection-status" class="{% if online %}online{% else %}offline{% endif %}">
+    <span class="status-icon"></span>
+    <span class="status-text">{% if online %}Conectado{% else %}Sin conexión{% endif %}</span>
+</div>
+
+<!-- Script para verificar conexión -->
+<script>
+    // Verificar estado de conexión periódicamente
+    function checkConnectionStatus() {
+        fetch('/check-connection/', { 
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('connection-status');
+            if (data.online) {
+                statusElement.className = 'online';
+                statusElement.querySelector('.status-text').textContent = 'Conectado';
+                
+                // Si estamos online, intentar sincronizar operaciones pendientes
+                fetch('/get-pending-count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.pending_count > 0) {
+                            // Mostrar notificación de sincronización
+                            const notification = document.createElement('div');
+                            notification.className = 'sync-notification';
+                            notification.textContent = `Sincronizando ${data.pending_count} operaciones...`;
+                            document.body.appendChild(notification);
+                            
+                            // Eliminar notificación después de 3 segundos
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 3000);
+                        }
+                    });
+            } else {
+                statusElement.className = 'offline';
+                statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+            }
+        })
+        .catch(() => {
+            // Si hay error en la petición, asumimos que estamos offline
+            const statusElement = document.getElementById('connection-status');
+            statusElement.className = 'offline';
+            statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+        });
+    }
+
+    // Verificar cada 30 segundos
+    setInterval(checkConnectionStatus, 30000);
+
+    // Verificar al cargar la página
+    document.addEventListener('DOMContentLoaded', checkConnectionStatus);
+</script>
+
+<style>
+    #connection-status {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    #connection-status.online {
+        background-color: #e6f7e6;
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+    
+    #connection-status.offline {
+        background-color: #f8d7da;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+    
+    .status-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .online .status-icon {
+        background-color: #28a745;
+    }
+    
+    .offline .status-icon {
+        background-color: #dc3545;
+    }
+    
+    .pending-operations {
+        margin-left: 10px;
+        font-size: 12px;
+    }
+    
+    .sync-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #cce5ff;
+        color: #004085;
+        padding: 10px 15px;
+        border-radius: 4px;
+        z-index: 1001;
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+</body>
+</html>

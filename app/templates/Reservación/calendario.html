@@ -1,0 +1,947 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario de Reservaciones</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css" rel="stylesheet">
+    <style>
+        /* Estilos base para temas */
+        :root {
+            --fc-today-bg-color: #e6f3ff;
+            --fc-border-color: #ddd;
+            --fc-page-bg-color: #fff;
+            --fc-neutral-bg-color: #f8f9fa;
+            --fc-list-event-hover-bg-color: #f1f1f1;
+            --fc-event-text-color: #fff;
+            --text-primary: #212529;
+            --primary-color: #3498db;
+            --secondary-color: #9b59b6;
+            --pending-color: #ffb878;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --shadow-color: rgba(0,0,0,0.1);
+            --card-bg: #ffffff;
+            --border-color: #e9ecef;
+        }
+
+        [data-theme="dark"] {
+            --fc-today-bg-color: #1a344f;
+            --fc-border-color: #444;
+            --fc-page-bg-color: #2a2a2a;
+            --fc-neutral-bg-color: #333;
+            --fc-list-event-hover-bg-color: #444;
+            --fc-event-text-color: #fff;
+            --text-primary: #f8f9fa;
+            --primary-color: #3498db;
+            --secondary-color: #9b59b6;
+            --pending-color: #ffb878;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --shadow-color: rgba(0,0,0,0.3);
+            --card-bg: #333;
+            --border-color: #444;
+        }
+
+        body {
+            background-color: var(--fc-page-bg-color);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        /* Estilos para eventos */
+        .fc-event-own {
+            background-color: var(--primary-color) !important;
+            border-color: #2980b9 !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .fc-event-other {
+            background-color: var(--secondary-color) !important;
+            border-color: #8e44ad !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+
+        .fc-event-pending {
+            background: repeating-linear-gradient(
+                45deg,
+                var(--pending-color),
+                var(--pending-color) 10px,
+                #ffd0a3 10px,
+                #ffd0a3 20px
+            ) !important;
+            border-color: #ff9b4d !important;
+        }
+
+        .fc-event:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+
+        .fc-event-synced {
+            opacity: 0.9;
+        }
+
+        .status-badge {
+            margin-left: 5px;
+            font-size: 0.8em;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        /* Ajustes de tamaño y contenedor */
+        .calendar-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            transition: all 0.3s ease;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            color: var(--text-primary);
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .calendar-title {
+            margin-bottom: 0;
+        }
+
+        .calendar-subtitle {
+            color: #6c757d;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+
+        .connection-status {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .status-badge i {
+            font-size: 0.9em;
+        }
+
+        .bg-success {
+            background-color: var(--success-color) !important;
+        }
+
+        .bg-warning {
+            background-color: var(--warning-color) !important;
+        }
+
+        .bg-info {
+            background-color: var(--info-color) !important;
+        }
+
+        .bg-danger {
+            background-color: var(--danger-color) !important;
+        }
+
+        /* Correcciones para días del calendario */
+        .fc-theme-standard .fc-daygrid-day {
+            background-color: var(--fc-page-bg-color);
+            transition: background-color 0.3s ease;
+        }
+
+        .fc-theme-standard .fc-daygrid-day.fc-day-today {
+            background-color: var(--fc-today-bg-color) !important;
+        }
+
+        [data-theme="dark"] .fc-theme-standard .fc-daygrid-day {
+            background-color: var(--fc-page-bg-color);
+            color: var(--text-primary);
+        }
+
+        [data-theme="dark"] .fc-theme-standard .fc-daygrid-day-number {
+            color: var(--text-primary);
+        }
+
+        /* Eliminar opacidad en días pasados */
+        .fc-day-past {
+            opacity: 1 !important;
+        }
+
+        /* Ajustar números de día */
+        .fc-daygrid-day-number {
+            color: var(--text-primary);
+            padding: 5px;
+            font-weight: normal;
+        }
+
+        /* Mejorar visibilidad del borde */
+        .fc-theme-standard td, 
+        .fc-theme-standard th {
+            border-color: var(--fc-border-color) !important;
+        }
+
+        /* Ajustes específicos para vista semanal */
+        .fc-timeGridWeek-view .fc-daygrid-day {
+            background-color: var(--fc-page-bg-color);
+        }
+
+        /* Modal y botones */
+        .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .modal-header, .modal-footer {
+            border-color: var(--border-color);
+        }
+
+        .modal-header {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .btn-close {
+            filter: invert(var(--icon-invert));
+        }
+
+        [data-theme="dark"] {
+            --icon-invert: 1;
+        }
+
+        [data-theme="light"] {
+            --icon-invert: 0;
+        }
+
+        /* Botón de tema */
+        .theme-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0, 0,0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* Leyenda del calendario */
+        .calendar-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 2px 8px var(--shadow-color);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        .legend-own {
+            background-color: var(--primary-color);
+        }
+
+        .legend-other {
+            background-color: var(--secondary-color);
+        }
+
+        .legend-pending {
+            background: repeating-linear-gradient(
+                45deg,
+                var(--pending-color),
+                var(--pending-color) 5px,
+                #ffd0a3 5px,
+                #ffd0a3 10px
+            );
+        }
+
+        /* Animaciones */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Tooltip personalizado */
+        .fc-event-tooltip {
+            position: absolute;
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            max-width: 250px;
+            font-size: 0.9rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        #connection-status.online {
+            background-color: #e6f7e6;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+        }
+
+        #connection-status.offline {
+            background-color: #f8d7da;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+        }
+
+        .status-icon {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .online .status-icon {
+            background-color: var(--success-color);
+        }
+
+        .offline .status-icon {
+            background-color: var(--danger-color);
+        }
+
+        /* Notificación de sincronización */
+        .sync-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #cce5ff;
+            color: #004085;
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 1001;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            animation: fadeInDown 0.5s;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .calendar-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .connection-status {
+                margin-top: 15px;
+            }
+            
+            .calendar-container {
+                padding: 15px 10px;
+            }
+            
+            .fc-toolbar {
+                flex-direction: column;
+            }
+            
+            .fc-toolbar-chunk {
+                margin-bottom: 10px;
+            }
+        }
+
+        /* Notificaciones */
+        .notification-badge {
+            position: relative;
+            top: -8px;
+            right: -5px;
+            padding: 3px 6px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 0.7rem;
+        }
+
+        /* Mejoras visuales para el calendario */
+        .fc-day-today {
+            background-color: var(--fc-today-bg-color) !important;
+            font-weight: bold;
+        }
+
+        .fc-day-today .fc-daygrid-day-number {
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 5px;
+        }
+
+        .fc-button-primary {
+            background-color: var(--primary-color) !important;
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .fc-button-primary:hover {
+            background-color: #2980b9 !important;
+            border-color: #2980b9 !important;
+        }
+
+        .fc-button-active {
+            background-color: #2980b9 !important;
+            border-color: #2980b9 !important;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'app/images/logo_uc1.png' %}" alt="Logo UC">
+            </div>
+            <ul>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' %}
+                        <li class="active"><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'listar_reservaciones' %}"><i class="fas fa-list"></i> Reservaciones</a></li>
+                        <li><a href="{% url 'listar_moderadores' %}"><i class="fas fa-users"></i> Moderadores</a></li>
+                        <li><a href="{% url 'listar_locales' %}"><i class="fas fa-map-marker-alt"></i> Locales</a></li>
+                    {% elif user.role == 'user' %}
+                        <li class="active"><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'mis_reservas' %}"><i class="fas fa-list"></i> Mis Reservas</a></li>
+                    {% endif %}
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notificaciones' %}">
+                        <i class="fas fa-bell"></i> Notificaciones
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger notification-badge">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'documentacion' %}"><i class="fas fa-book"></i> Documentación</a></li>
+                <li><a href="{% url 'cerrar_sesion' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <div class="calendar-header">
+                <div>
+                    <h1 class="calendar-title">Calendario de Reservaciones</h1>
+                    <p class="calendar-subtitle">Visualiza y gestiona todas las reservaciones del sistema</p>
+                </div>
+                <div class="connection-status">
+                    <span class="status-badge {% if online %}bg-success{% else %}bg-warning{% endif %}" id="connection-status-badge">
+                        <i class="fas fa-{% if online %}wifi{% else %}exclamation-triangle{% endif %}"></i>
+                        {% if online %}Conectado{% else %}Modo Offline{% endif %}
+                    </span>
+                    <span class="status-badge bg-info" id="event-count">
+                        <i class="fas fa-calendar-check"></i>
+                        <span id="synced-count">{{ synced_count }}</span> eventos
+                    </span>
+                    {% if pending_count > 0 %}
+                    <span class="status-badge bg-warning text-dark pulse" id="pending-count">
+                        <i class="fas fa-clock"></i>
+                        {{ pending_count }} pendientes
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Calendario Principal -->
+            <div class="calendar-container">
+                <div id="calendar"></div>
+            </div>
+
+            <!-- Leyenda del calendario -->
+            <div class="calendar-legend">
+                <div class="legend-item">
+                    <div class="legend-color legend-own"></div>
+                    <span>Mis reservas</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-other"></div>
+                    <span>Reservas de otros usuarios</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color legend-pending"></div>
+                    <span>Pendientes de sincronización</span>
+                </div>
+            </div>
+
+            <!-- Modal para detalles del evento -->
+            <div class="modal fade" id="eventModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="eventModalTitle">Detalles de Reservación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="event-details">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <p><i class="fas fa-calendar-day me-2"></i> <strong>Inicio:</strong> <span id="eventStart"></span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><i class="fas fa-clock me-2"></i> <strong>Fin:</strong> <span id="eventEnd"></span></p>
+                                    </div>
+                                </div>
+                                <p><i class="fas fa-align-left me-2"></i> <strong>Descripción:</strong> <span id="eventDescription"></span></p>
+                                <p id="eventOwner" class="text-muted"><i class="fas fa-user me-2"></i> <span id="eventOwnerText"></span></p>
+                                <div id="eventStatus" class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i> <span id="eventStatusText"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Cerrar
+                            </button>
+                            <button type="button" class="btn btn-primary d-none" id="editEventBtn">
+                                <i class="fas fa-edit me-2"></i>Editar
+                            </button>
+                            <button type="button" class="btn btn-danger d-none" id="cancelEventBtn">
+                                <i class="fas fa-trash-alt me-2"></i>Cancelar Reserva
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botón de cambio de tema -->
+    <button id="theme-toggle" class="theme-btn">🌓</button>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- FullCalendar JS -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/locales/es.min.js"></script>
+
+    <script>
+        // Configuración inicial
+        document.addEventListener('DOMContentLoaded', function() {
+            // Cambiar tema
+            const toggle = document.getElementById('theme-toggle');
+            const html = document.documentElement;
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            html.setAttribute('data-theme', savedTheme);
+
+            toggle.addEventListener('click', () => {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // Actualizar iconos y estilos
+                updateThemeStyles(newTheme);
+                
+                {% if request.user.is_authenticated %}
+                    fetch(`/set-theme/${newTheme}/`, { method: 'GET' });
+                {% endif %}
+            });
+
+            // Función para actualizar estilos del tema
+            function updateThemeStyles(theme) {
+                // Actualizar FullCalendar
+                calendar.setOption('themeSystem', theme === 'dark' ? 'standard' : 'standard');
+                
+                // Forzar redibujado del calendario
+                calendar.updateSize();
+            }
+
+            // Inicializar calendario
+            const calendarEl = document.getElementById('calendar');
+            const calendarEvents = {{ calendar_events|safe }};
+            
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                locale: 'es',
+                initialView: window.innerWidth < 768 ? 'listWeek' : 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                themeSystem: 'standard',
+                events: calendarEvents,
+                eventTimeFormat: {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                },
+                dayMaxEvents: true,
+                navLinks: true,
+                businessHours: {
+                    daysOfWeek: [1, 2, 3, 4, 5], // Lunes a viernes
+                    startTime: '08:00',
+                    endTime: '18:00',
+                },
+                nowIndicator: true,
+                eventDidMount: function(info) {
+                    // Estilo para eventos propios vs otros
+                    if (info.event.extendedProps.is_own) {
+                        info.el.classList.add('fc-event-own');
+                    } else {
+                        info.el.classList.add('fc-event-other');
+                    }
+
+                    // Estilo para eventos pendientes
+                    if (info.event.extendedProps.status === 'pending') {
+                        info.el.classList.add('fc-event-pending');
+                        info.el.title = "Pendiente de sincronización";
+                    } else {
+                        info.el.classList.add('fc-event-synced');
+                    }
+
+                    // Tooltip para eventos
+                    const username = info.event.extendedProps.username || 'Usuario';
+                    const status = info.event.extendedProps.status === 'pending' ? 'Pendiente' : 'Sincronizado';
+                    info.el.title = `${info.event.title} - ${username} (${status})`;
+                    
+                    // Asegurar texto legible en ambos temas
+                    info.el.style.color = 'white';
+                    
+                    // Añadir tooltip personalizado
+                    info.el.addEventListener('mouseenter', function(e) {
+                        const tooltip = document.createElement('div');
+                        tooltip.className = 'fc-event-tooltip';
+                        tooltip.innerHTML = `
+                            <strong>${info.event.title}</strong><br>
+                            <i class="fas fa-user me-1"></i> ${username}<br>
+                            <i class="fas fa-clock me-1"></i> ${info.event.start ? info.event.start.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) : 'N/A'} - 
+                            ${info.event.end ? info.event.end.toLocaleTimeString('es-ES', {hour: '2-digit', minute:'2-digit'}) : 'N/A'}<br>
+                            <i class="fas fa-circle me-1" style="color: ${info.event.extendedProps.status === 'pending' ? '#ffb878' : '#2ecc71'}"></i> ${status}
+                        `;
+                        document.body.appendChild(tooltip);
+                        
+                        // Posicionar tooltip
+                        const rect = info.el.getBoundingClientRect();
+                        tooltip.style.left = `${rect.left + window.scrollX}px`;
+                        tooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                        tooltip.style.opacity = '1';
+                        
+                        info.el.addEventListener('mouseleave', function() {
+                            tooltip.remove();
+                        });
+                    });
+                },
+                eventClick: function(info) {
+                    const event = info.event;
+                    const modal = new bootstrap.Modal(document.getElementById('eventModal'), {
+                        keyboard: true
+                    });
+                    
+                    document.getElementById('eventModalTitle').textContent = event.title;
+                    document.getElementById('eventStart').textContent = event.start ? event.start.toLocaleString('es-ES') : 'N/A';
+                    document.getElementById('eventEnd').textContent = event.end ? event.end.toLocaleString('es-ES') : 'N/A';
+                    document.getElementById('eventDescription').textContent = event.extendedProps.description || 'Sin descripción';
+                    
+                    // Mostrar dueño del evento si no es propio
+                    const ownerElement = document.getElementById('eventOwner');
+                    const ownerTextElement = document.getElementById('eventOwnerText');
+                    if (!event.extendedProps.is_own && event.extendedProps.username) {
+                        ownerTextElement.textContent = `Reserva de: ${event.extendedProps.username}`;
+                        ownerElement.classList.remove('d-none');
+                    } else {
+                        ownerElement.classList.add('d-none');
+                    }
+                    
+                    // Estado del evento
+                    const statusElement = document.getElementById('eventStatus');
+                    const statusTextElement = document.getElementById('eventStatusText');
+                    if (event.extendedProps.status === 'pending') {
+                        statusTextElement.textContent = 'Pendiente de sincronización con Google Calendar';
+                        statusElement.className = 'alert alert-warning';
+                        document.getElementById('cancelEventBtn').classList.remove('d-none');
+                    } else {
+                        statusTextElement.textContent = 'Sincronizado con Google Calendar';
+                        statusElement.className = 'alert alert-success';
+                        document.getElementById('cancelEventBtn').classList.add('d-none');
+                    }
+                    
+                    // Mostrar botón de editar solo para eventos propios
+                    const editBtn = document.getElementById('editEventBtn');
+                    if (event.extendedProps.is_own) {
+                        editBtn.classList.remove('d-none');
+                        editBtn.onclick = function() {
+                            const reservaId = event.extendedProps.reserva_id;
+                            if (reservaId) {
+                                window.location.href = `/editar-reserva/${reservaId}/`;
+                            }
+                        };
+                    } else {
+                        editBtn.classList.add('d-none');
+                    }
+                    
+                    // Configurar botón de cancelación
+                    const cancelBtn = document.getElementById('cancelEventBtn');
+                    cancelBtn.onclick = function() {
+                        if (confirm('¿Estás seguro de cancelar esta reserva?')) {
+                            const reservaId = event.extendedProps.reserva_id;
+                            if (reservaId) {
+                                fetch(`/eliminar-reserva/${reservaId}/`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'X-CSRFToken': '{{ csrf_token }}',
+                                        'Content-Type': 'application/json'
+                                    }
+                                }).then(response => {
+                                    if (response.ok) {
+                                        event.remove();
+                                        modal.hide();
+                                        updatePendingCount();
+                                        
+                                        // Mostrar notificación
+                                        showNotification('Reserva cancelada correctamente', 'success');
+                                    }
+                                });
+                            }
+                        }
+                    };
+                    
+                    // Configurar botón de cerrar
+                    const closeBtn = document.querySelector('.btn-close');
+                    closeBtn.onclick = function() {
+                        modal.hide();
+                    };
+                    
+                    modal.show();
+                },
+                eventContent: function(arg) {
+                    // Personalizar contenido del evento
+                    const status = arg.event.extendedProps.status;
+                    const isOwn = arg.event.extendedProps.is_own;
+                    
+                    const titleEl = document.createElement('div');
+                    titleEl.innerHTML = arg.event.title;
+                    titleEl.style.color = 'white'; // Texto blanco para mejor contraste
+                    titleEl.style.fontWeight = isOwn ? 'bold' : 'normal';
+                    
+                    if (status === 'pending') {
+                        const badge = document.createElement('span');
+                        badge.className = 'status-badge';
+                        badge.innerHTML = '⏳';
+                        titleEl.appendChild(badge);
+                    }
+                    
+                    return { domNodes: [titleEl] };
+                },
+                // Responsive
+                windowResize: function(view) {
+                    if (window.innerWidth < 768) {
+                        calendar.changeView('listWeek');
+                    } else {
+                        calendar.changeView('dayGridMonth');
+                    }
+                }
+            });
+            
+            calendar.render();
+            
+            // Ajustar tamaño del calendario
+            function adjustCalendarSize() {
+                const calendarContainer = document.querySelector('.calendar-container');
+                const sidebar = document.querySelector('.sidebar');
+                const header = document.querySelector('.calendar-header');
+                
+                if (calendarContainer && sidebar && header) {
+                    const availableHeight = window.innerHeight - header.offsetHeight - 200;
+                    calendarContainer.style.minHeight = `${availableHeight}px`;
+                    calendar.updateSize();
+                }
+            }
+            
+            window.addEventListener('resize', adjustCalendarSize);
+            window.addEventListener('load', adjustCalendarSize);
+            
+            // Actualizar contadores
+            function updatePendingCount() {
+                fetch('{% url "get_pending_count" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const pendingCountElement = document.getElementById('pending-count');
+                        if (data.pending_count > 0) {
+                            if (pendingCountElement) {
+                                pendingCountElement.innerHTML = `<i class="fas fa-clock"></i> ${data.pending_count} pendientes`;
+                            } else {
+                                const newPendingElement = document.createElement('span');
+                                newPendingElement.id = 'pending-count';
+                                newPendingElement.className = 'status-badge bg-warning text-dark pulse';
+                                newPendingElement.innerHTML = `<i class="fas fa-clock"></i> ${data.pending_count} pendientes`;
+                                document.querySelector('.connection-status').appendChild(newPendingElement);
+                            }
+                        } else if (pendingCountElement) {
+                            pendingCountElement.remove();
+                        }
+                        
+                        document.getElementById('synced-count').textContent = data.synced_count;
+                    });
+            }
+            
+            // Verificar actualizaciones periódicamente
+            setInterval(updatePendingCount, 60000); // Cada minuto
+            
+            // Sincronizar al recuperar conexión
+            const connectionStatus = document.getElementById('connection-status');
+            const connectionBadge = document.getElementById('connection-status-badge');
+            
+            if (connectionStatus && connectionBadge) {
+                setInterval(() => {
+                    fetch('{% url "check_connection" %}')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.online) {
+                                connectionStatus.className = 'online';
+                                connectionStatus.querySelector('.status-text').textContent = 'Conectado';
+                                
+                                connectionBadge.className = 'status-badge bg-success';
+                                connectionBadge.innerHTML = '<i class="fas fa-wifi"></i> Conectado';
+                                
+                                // Forzar sincronización si hay operaciones pendientes
+                                if (data.pending_count > 0) {
+                                    showNotification(`Sincronizando ${data.pending_count} operaciones pendientes...`, 'info');
+                                    setTimeout(() => {
+                                        location.reload();
+                                    }, 2000);
+                                }
+                            } else {
+                                connectionStatus.className = 'offline';
+                                connectionStatus.querySelector('.status-text').textContent = 'Sin conexión';
+                                
+                                connectionBadge.className = 'status-badge bg-warning';
+                                connectionBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Modo Offline';
+                            }
+                        });
+                }, 30000); // Cada 30 segundos
+            }
+            
+            // Función para mostrar notificaciones
+            function showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = 'sync-notification';
+                notification.textContent = message;
+                
+                // Ajustar estilo según tipo
+                if (type === 'success') {
+                    notification.style.backgroundColor = '#d4edda';
+                    notification.style.color = '#155724';
+                } else if (type === 'error') {
+                    notification.style.backgroundColor = '#f8d7da';
+                    notification.style.color = '#721c24';
+                }
+                
+                document.body.appendChild(notification);
+                
+                // Eliminar notificación después de 3 segundos
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        notification.remove();
+                    }, 500);
+                }, 3000);
+            }
+            
+            // Verificar notificaciones no leídas
+            function checkNotifications() {
+                fetch('{% url "check_notifications" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const notificationLink = document.querySelector('.nav-link[href="{% url "notificaciones" %}"]');
+                        const existingBadge = notificationLink.querySelector('.notification-badge');
+                        
+                        if (data.unread_count > 0) {
+                            if (existingBadge) {
+                                existingBadge.textContent = data.unread_count;
+                            } else {
+                                const badge = document.createElement('span');
+                                badge.className = 'badge bg-danger notification-badge';
+                                badge.textContent = data.unread_count;
+                                notificationLink.appendChild(badge);
+                            }
+                            notificationLink.querySelector('.fa-bell').classList.add('has-unread');
+                        } else if (existingBadge) {
+                            existingBadge.remove();
+                            notificationLink.querySelector('.fa-bell').classList.remove('has-unread');
+                        }
+                    });
+            }
+            
+            // Verificar notificaciones cada minuto
+            setInterval(checkNotifications, 60000);
+            
+            // Inicializar estilos del tema
+            updateThemeStyles(savedTheme);
+        });
+    </script>
+</body>
+</html>

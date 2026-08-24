@@ -1,0 +1,93 @@
+<div class="table-container" id="results-container">
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Nombre de la Videoconferencia</th>
+                <th>Motivo</th>
+                <th>Área de Solicitud</th>
+                <th>URL</th>
+                <th>Plataforma</th>
+                <th>¿Somos Creadores?</th>
+                <th>Fecha y Hora</th>
+                <th>Duración</th>
+                <th>Participantes</th>
+                <th>Observaciones</th>
+                <th>Local</th>
+                <th>Moderador</th>
+                <th>Usuario</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reserva in page_obj %}
+                <tr>
+                    <td>{{ reserva.vcName }}</td>
+                    <td>{{ reserva.get_vcMotive_display }}</td>
+                    <td>{{ reserva.get_requestArea_display }}</td>
+                    <td><a href="{{ reserva.url }}" target="_blank">{{ reserva.url }}</a></td>
+                    <td>{{ reserva.get_platafom_display }}</td>
+                    <td>{{ reserva.weCreators|yesno:"Sí,No" }}</td>
+                    <td>
+                        {{ reserva.dateTime|date:"d/m/Y H:i" }}
+                        {% if not reserva.google_calendar_event_id %}
+                            <span class="badge bg-warning">Pendiente de sincronizar</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ reserva.duration }} horas</td>
+                    <td>{{ reserva.cantpart }}</td>
+                    <td>{{ reserva.observations }}</td>
+                    <td>{{ reserva.local }}</td>
+                    <td>{{ reserva.idofModerator }}</td>
+                    <td>{{ reserva.user.username }}</td>
+                    <td>
+                        {% if reserva.status == 'pending' %}
+                            <span class="badge bg-warning">Pendiente</span>
+                        {% elif reserva.status == 'approved' %}
+                            <span class="badge bg-success">Aprobado</span>
+                        {% else %}
+                            <span class="badge bg-danger">Rechazado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if reserva.status == 'pending' and user.is_superuser %}
+                            <a href="{% url 'aprobar_reserva' reserva.pk %}" class="btn btn-sm btn-info">Revisar</a>
+                        {% endif %}
+                        <a href="{% url 'editar_reserva' reserva.pk %}" class="btn btn-sm btn-warning">Editar</a>
+                        <a href="{% url 'eliminar_reserva' reserva.pk %}" class="btn btn-sm btn-danger">Eliminar</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="14">No hay reservaciones registradas.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <nav aria-label="Paginación">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Primera</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Anterior</a>
+                </li>
+            {% endif %}
+
+            <li class="page-item disabled">
+                <span class="page-link">Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Siguiente</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">Última</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>

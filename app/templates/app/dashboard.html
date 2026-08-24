@@ -1,0 +1,392 @@
+<!-- dashboard.html -->
+{% load static %}
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'app/css/styles.css' %}">
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="{% static 'app/images/logo_uc1.png' %}" alt="Logo UC">
+            </div>
+            <ul>
+                <li><a href="{% url 'dashboard' %}"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                {% if user.is_authenticated %}
+                    {% if user.role == 'admin' %}
+                        <li><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'listar_reservaciones' %}"><i class="fas fa-list"></i> Reservaciones</a></li>
+                        <li><a href="{% url 'listar_moderadores' %}"><i class="fas fa-users"></i> Moderadores</a></li>
+                        <li><a href="{% url 'listar_locales' %}"><i class="fas fa-map-marker-alt"></i> Locales</a></li>
+                    {% elif user.role == 'user' %}
+                        <li><a href="{% url 'calendario_reservaciones' %}"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                        <li><a href="{% url 'mis_reservas' %}"><i class="fas fa-list"></i> Mis Reservas</a></li>
+                    {% endif %}
+                {% endif %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'notificaciones' %}">
+                        <i class="fas fa-bell"></i> Notificaciones
+                        {% if unread_count > 0 %}
+                        <span class="badge bg-danger">{{ unread_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li><a href="{% url 'documentacion' %}"><i class="fas fa-book"></i> Documentación</a></li>
+                <li><a href="{% url 'cerrar_sesion' %}"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
+            </ul>
+        </div>
+
+        <div class="content">
+            <!-- Botón de tema -->
+            <button class="theme-toggle" id="theme-toggle">🌓</button>
+        
+        <!-- Añadir esto en tu plantilla base -->
+ <!-- Indicador de estado de conexión -->
+ <div id="connection-status" class="{% if online %}online{% else %}offline{% endif %}">
+    <span class="status-icon"></span>
+    <span class="status-text">{% if online %}Conectado{% else %}Sin conexión{% endif %}</span>
+</div>
+
+<!-- Script para verificar conexión -->
+<script>
+    // Verificar estado de conexión periódicamente
+    function checkConnectionStatus() {
+        fetch('/check-connection/', { 
+            method: 'GET',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            cache: 'no-store'
+        })
+        .then(response => response.json())
+        .then(data => {
+            const statusElement = document.getElementById('connection-status');
+            if (data.online) {
+                statusElement.className = 'online';
+                statusElement.querySelector('.status-text').textContent = 'Conectado';
+                
+                // Si estamos online, intentar sincronizar operaciones pendientes
+                fetch('/get-pending-count/')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.pending_count > 0) {
+                            // Mostrar notificación de sincronización
+                            const notification = document.createElement('div');
+                            notification.className = 'sync-notification';
+                            notification.textContent = `Sincronizando ${data.pending_count} operaciones...`;
+                            document.body.appendChild(notification);
+                            
+                            // Eliminar notificación después de 3 segundos
+                            setTimeout(() => {
+                                notification.remove();
+                            }, 3000);
+                        }
+                    });
+            } else {
+                statusElement.className = 'offline';
+                statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+            }
+        })
+        .catch(() => {
+            // Si hay error en la petición, asumimos que estamos offline
+            const statusElement = document.getElementById('connection-status');
+            statusElement.className = 'offline';
+            statusElement.querySelector('.status-text').textContent = 'Sin conexión';
+        });
+    }
+
+    // Verificar cada 30 segundos
+    setInterval(checkConnectionStatus, 30000);
+
+    // Verificar al cargar la página
+    document.addEventListener('DOMContentLoaded', checkConnectionStatus);
+</script>
+
+<style>
+    #connection-status {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    #connection-status.online {
+        background-color: #e6f7e6;
+        color: #28a745;
+        border: 1px solid #28a745;
+    }
+    
+    #connection-status.offline {
+        background-color: #f8d7da;
+        color: #dc3545;
+        border: 1px solid #dc3545;
+    }
+    
+    .status-icon {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 8px;
+    }
+    
+    .online .status-icon {
+        background-color: #28a745;
+    }
+    
+    .offline .status-icon {
+        background-color: #dc3545;
+    }
+    
+    .pending-operations {
+        margin-left: 10px;
+        font-size: 12px;
+    }
+    
+    .sync-notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #cce5ff;
+        color: #004085;
+        padding: 10px 15px;
+        border-radius: 4px;
+        z-index: 1001;
+        animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+</style>
+            
+            
+            <h1>Dashboard</h1>
+            <p>Bienvenido al sistema de reservas de videoconferencia</p>
+
+            <!-- Notificaciones -->
+            {% if messages %}
+                <div class="messages">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Tarjetas de Resumen -->
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Reservaciones Totales</h3>
+                        <p>{{ total_reservas }}</p>
+                    </div>
+                </div>
+                {% if is_admin %}
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Moderadores Activos</h3>
+                        <p>{{ total_moderadores }}</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Locales Disponibles</h3>
+                        <p>{{ total_locales }}</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <h3>Horas Reservadas</h3>
+                        <p>{{ horas_reservadas }} h</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráficos (solo para admin) -->
+            {% if is_admin %}
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h2>Reservas por Mes</h2>
+                        <canvas id="reservasPorMes"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="chart-container">
+                        <h2>Reservas por Plataforma</h2>
+                        <canvas id="reservasPorPlataforma"></canvas>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Reservaciones Recientes -->
+            <div class="recent-reservations">
+                <h2>Reservaciones Recientes</h2>
+                {% if reservaciones_recientes %}
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Fecha y Hora</th>
+                                <th>Duración</th>
+                                <th>Plataforma</th>
+                                <th>Usuario</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for reserva in reservaciones_recientes %}
+                                <tr>
+                                    <td>{{ reserva.vcName }}</td>
+                                    <td>{{ reserva.dateTime }}</td>
+                                    <td>{{ reserva.duration }} horas</td>
+                                    <td>{{ reserva.get_platafom_display }}</td>
+                                    <td>{{ reserva.user.username }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No hay reservaciones recientes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (solo para admin) -->
+    {% if is_admin %}
+    <!-- Pasar datos a JavaScript usando json_script -->
+    {{ meses|json_script:"meses-data" }}
+    {{ total_reservas_mes|json_script:"total-reservas-mes-data" }}
+    {{ plataformas|json_script:"plataformas-data" }}
+    {{ total_reservas_plataforma|json_script:"total-reservas-plataforma-data" }}
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Recuperar los datos desde los bloques generados por json_script
+        const meses = JSON.parse(document.getElementById('meses-data').textContent);
+        const total_reservas_mes = JSON.parse(document.getElementById('total-reservas-mes-data').textContent);
+        const plataformas = JSON.parse(document.getElementById('plataformas-data').textContent);
+        const total_reservas_plataforma = JSON.parse(document.getElementById('total-reservas-plataforma-data').textContent);
+
+        // Gráfico de Reservas por Mes
+        const ctxMes = document.getElementById('reservasPorMes').getContext('2d');
+        const chartMes = new Chart(ctxMes, {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'Reservas por Mes',
+                    data: total_reservas_mes,
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: function() {
+                                return getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+                            }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: function() {
+                                return getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Reservas por Plataforma
+        const ctxPlataforma = document.getElementById('reservasPorPlataforma').getContext('2d');
+        const chartPlataforma = new Chart(ctxPlataforma, {
+            type: 'pie',
+            data: {
+                labels: plataformas,
+                datasets: [{
+                    label: 'Reservas por Plataforma',
+                    data: total_reservas_plataforma,
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.8)',
+                        'rgba(54, 162, 235, 0.8)',
+                        'rgba(255, 206, 86, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: function() {
+                                return getComputedStyle(document.documentElement).getPropertyValue('--text-color');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Función para actualizar colores de gráficos al cambiar tema
+        function updateChartColors() {
+            chartMes.update();
+            chartPlataforma.update();
+        }
+    </script>
+    {% endif %}
+
+    <!-- Script del tema -->
+    <script>
+        const toggle = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+        
+        // Cargar tema guardado
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        html.setAttribute('data-theme', savedTheme);
+
+        toggle.addEventListener('click', () => {
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            {% if is_admin %}
+                updateChartColors();
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                fetch(`/set-theme/${newTheme}/`, { method: 'GET' });
+            {% endif %}
+        });
+    </script>
+</body>
+</html>
